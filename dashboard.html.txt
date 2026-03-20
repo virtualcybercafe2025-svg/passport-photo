@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Passport Photo Maker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600&display=swap');
+        body { font-family: 'Hind Siliguri', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <nav class="bg-blue-600 p-4 text-white shadow-md flex justify-between items-center">
+        <h1 class="text-xl font-bold">ফটো ড্যাশবোর্ড</h1>
+        <button onclick="logout()" class="bg-red-500 px-4 py-1 rounded text-sm">লগআউট</button>
+    </nav>
+
+    <div class="max-w-4xl mx-auto p-6">
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <h2 class="text-lg font-bold mb-4 border-b pb-2 text-blue-600">ছবি প্রসেসিং করুন</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Upload Section -->
+                <div class="space-y-4">
+                    <label class="block text-sm font-medium">ছবি আপলোড করুন:</label>
+                    <input type="file" id="imageInput" accept="image/*" class="w-full p-2 border rounded-lg">
+                    
+                    <div class="flex gap-2">
+                        <select id="bgOption" class="flex-1 p-2 border rounded">
+                            <option value="white">সাদা ব্যাকগ্রাউন্ড</option>
+                            <option value="blue">নীল ব্যাকগ্রাউন্ড</option>
+                            <option value="original">অরিজিনাল রাখুন</option>
+                        </select>
+                        <button onclick="processImage()" class="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700">রিমুভ ব্যাকগ্রাউন্ড</button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs">ছবির সাইজ:</label>
+                            <select id="photoSize" class="w-full p-2 border rounded text-sm">
+                                <option value="3x4">পাসপোর্ট (3x4 cm)</option>
+                                <option value="3.5x4.5">স্ট্যাম্প (3.5x4.5 cm)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs">কপি সংখ্যা:</label>
+                            <input type="number" id="copyCount" value="10" min="1" class="w-full p-2 border rounded text-sm">
+                        </div>
+                    </div>
+                    
+                    <button onclick="downloadPDF()" class="w-full bg-blue-700 text-white py-3 rounded-lg font-bold mt-4 shadow-lg hover:bg-blue-800">PDF ডাউনলোড করুন</button>
+                </div>
+
+                <!-- Preview Section -->
+                <div class="border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center p-2 bg-gray-100 min-h-[200px]">
+                    <img id="preview" class="max-w-full max-h-[300px] shadow-md hidden" src="">
+                    <p id="previewText" class="text-gray-400 text-sm">ছবির প্রিভিউ এখানে দেখা যাবে</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // সিকিউরিটি চেক: লগইন না থাকলে ফেরত পাঠানো
+        if(!localStorage.getItem("userMobile")) { window.location.href = "index.html"; }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = "index.html";
+        }
+
+        let processedImageBase64 = null;
+
+        async function processImage() {
+            const fileInput = document.getElementById('imageInput');
+            if (fileInput.files.length === 0) { alert("একটি ছবি সিলেক্ট করুন!"); return; }
+
+            const preview = document.getElementById('preview');
+            const previewText = document.getElementById('previewText');
+            
+            // Note: এখানে Remove.bg API কী লাগবে। 
+            // আপাতত আমি লোকাল প্রিভিউ দেখাচ্ছি। আপনি API Key কিনলে এখানে কোড যোগ হবে।
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.classList.remove('hidden');
+                previewText.classList.add('hidden');
+                processedImageBase64 = e.target.result;
+            }
+            reader.readAsDataURL(fileInput.files[0]);
+            alert("ছবি লোড হয়েছে। ব্যাকগ্রাউন্ড রিমুভ করার জন্য Remove.bg API ইন্টিগ্রেট করতে হবে।");
+        }
+
+        async function downloadPDF() {
+            if(!processedImageBase64) { alert("আগে ছবি প্রসেস করুন!"); return; }
+            
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const copies = parseInt(document.getElementById('copyCount').value);
+            const size = document.getElementById('photoSize').value;
+            
+            let w = 30, h = 40; // 3x4cm in mm
+            if(size === "3.5x4.5") { w = 35; h = 45; }
+
+            let x = 10, y = 10;
+            for(let i = 0; i < copies; i++) {
+                pdf.addImage(processedImageBase64, 'JPEG', x, y, w, h);
+                x += w + 5;
+                if(x > 180) { x = 10; y += h + 5; }
+            }
+
+            pdf.save("Passport_Photos.pdf");
+        }
+    </script>
+</body>
+</html>

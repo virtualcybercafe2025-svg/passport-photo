@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel - Approve Users</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-800 text-white p-8">
+    <h1 class="text-3xl font-bold mb-6">অ্যাডমিন প্যানেল</h1>
+    
+    <div class="bg-white text-black p-6 rounded-lg shadow-xl overflow-x-auto">
+        <h2 class="font-bold mb-4">পেন্ডিং ইউজার লিস্ট (গুগল শিট থেকে আসবে)</h2>
+        <p class="text-sm text-gray-500 mb-4">আপনি সরাসরি গুগল শিটে গিয়ে Status কলামে 'Approved' লিখে দিলেই ইউজার লগইন করতে পারবে।</p>
+        
+        <a href="আপনার_গুগল_শিট_লিঙ্ক_এখানে" target="_blank" class="bg-blue-600 text-white px-6 py-2 rounded">গুগল শিট ওপেন করুন</a>
+    </div>
+
+    <div class="mt-10 p-6 border border-gray-600 rounded">
+        <h2 class="font-bold mb-4">সরাসরি ইউজার অ্যাড করুন (Apps Script দিয়ে)</h2>
+        <!-- এখানে ছোট একটি ফর্ম যোগ করা যাবে -->
+    </div>
+</body>
+</html>
