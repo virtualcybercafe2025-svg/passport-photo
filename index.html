@@ -4,103 +4,154 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>পাসপোর্ট ফটো পোর্টাল</title>
-    <!-- CSS লোড নিশ্চিত করার জন্য -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f3f4f6; }
-        .form-card { background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        /* ইন্টারনাল সিএসএস - এটি কোনো সিডিএন ছাড়াই কাজ করবে */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; align-items: center; justify-content: center; min-h: 100vh; height: 100vh; }
+        .container { background: white; width: 100%; max-width: 400px; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 6px solid #2563eb; }
+        .header { text-align: center; margin-bottom: 25px; }
+        .header h1 { color: #1e293b; font-size: 24px; margin-bottom: 5px; }
+        .header p { color: #64748b; font-size: 14px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-size: 14px; color: #475569; font-weight: 600; }
+        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; transition: 0.3s; }
+        input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        .btn { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn:hover { background: #1d4ed8; }
+        .btn-reg { background: #10b981; }
+        .btn-reg:hover { background: #059669; }
+        .footer-link { text-align: center; margin-top: 20px; font-size: 14px; }
+        .footer-link a { color: #2563eb; text-decoration: none; font-weight: bold; }
+        .qr-section { background: #eff6ff; padding: 15px; border-radius: 8px; text-align: center; border: 1px dashed #bfdbfe; margin-bottom: 15px; }
+        .qr-section img { width: 120px; height: 120px; margin-top: 10px; }
+        .hidden { display: none; }
+        #msgBox { margin-top: 15px; padding: 10px; border-radius: 6px; text-align: center; font-size: 14px; }
+        .success { background: #dcfce7; color: #166534; }
+        .error { background: #fee2e2; color: #991b1b; }
+        .info { background: #e0f2fe; color: #075985; }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
+<body>
 
-    <div class="form-card p-8 w-full max-w-md border-t-8 border-blue-600">
-        <div class="text-center mb-6">
-            <i class="fa-solid fa-camera-retro text-4xl text-blue-600 mb-2"></i>
-            <h1 class="text-3xl font-bold text-gray-800">পাসপোর্ট ফটো পোর্টাল</h1>
-            <p class="text-gray-500">আপনার ছবি প্রসেসিং করার সহজ সমাধান</p>
-        </div>
-
-        <!-- Login Form -->
-        <div id="loginSection">
-            <div class="space-y-4">
-                <input type="text" id="loginMobile" placeholder="মোবাইল নম্বর" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500">
-                <input type="password" id="loginPassword" placeholder="পাসওয়ার্ড" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500">
-                <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">লগইন করুন</button>
-            </div>
-            <p class="mt-4 text-center text-sm">অ্যাকাউন্ট নেই? <a href="javascript:void(0)" onclick="toggleForm()" class="text-blue-600 font-bold">নতুন অ্যাকাউন্ট খুলুন</a></p>
-        </div>
-
-        <!-- Registration Form -->
-        <div id="registerSection" class="hidden space-y-3">
-            <input type="text" id="regName" placeholder="আপনার নাম" class="w-full p-2 border rounded">
-            <input type="text" id="regMobile" placeholder="মোবাইল নম্বর" class="w-full p-2 border rounded">
-            <input type="password" id="regPass" placeholder="পাসওয়ার্ড" class="w-full p-2 border rounded">
-            
-            <div class="bg-blue-50 p-3 rounded text-center border border-blue-200">
-                <p class="text-xs font-bold mb-1">পেমেন্ট QR কোড</p>
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=PAYMENT" class="mx-auto">
-            </div>
-            
-            <input type="text" id="regTxid" placeholder="Transaction ID" class="w-full p-2 border-2 border-orange-400 rounded font-bold">
-            <button onclick="handleRegister()" class="w-full bg-green-600 text-white py-3 rounded font-bold">রেজিস্ট্রেশন সাবমিট</button>
-            <p class="mt-2 text-center text-sm"><a href="javascript:void(0)" onclick="toggleForm()" class="text-blue-600">লগইন ফিরে যান</a></p>
-        </div>
-
-        <div id="msgBox" class="mt-4 p-3 rounded text-center hidden"></div>
+<div class="container">
+    <div class="header">
+        <h1>পাসপোর্ট ফটো পোর্টাল</h1>
+        <p>আপনার কাজ সহজ করার অনলাইন টুল</p>
     </div>
 
-    <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzE8YwMHm-3HiCWZT2g55nH24C62rGjJu-bCJiXkZi8yQKU99sRUJDEKdTK_-4_PKwXbA/exec";
+    <!-- Login Form -->
+    <div id="loginSection">
+        <div class="form-group">
+            <label>মোবাইল নম্বর</label>
+            <input type="text" id="loginMobile" placeholder="017XXXXXXXX">
+        </div>
+        <div class="form-group">
+            <label>পাসওয়ার্ড</label>
+            <input type="password" id="loginPassword" placeholder="******">
+        </div>
+        <button class="btn" onclick="handleLogin()">লগইন করুন</button>
+        <div class="footer-link">
+            অ্যাকাউন্ট নেই? <a href="javascript:void(0)" onclick="toggleForm()">নতুন রেজিস্ট্রেশন করুন</a>
+        </div>
+    </div>
 
-        function toggleForm() {
-            document.getElementById('loginSection').classList.toggle('hidden');
-            document.getElementById('registerSection').classList.toggle('hidden');
+    <!-- Registration Form -->
+    <div id="registerSection" class="hidden">
+        <div class="form-group">
+            <label>আপনার নাম</label>
+            <input type="text" id="regName" placeholder="পুরো নাম লিখুন">
+        </div>
+        <div class="form-group">
+            <label>মোবাইল নম্বর</label>
+            <input type="text" id="regMobile" placeholder="017XXXXXXXX">
+        </div>
+        <div class="form-group">
+            <label>পাসওয়ার্ড</label>
+            <input type="password" id="regPass" placeholder="পাসওয়ার্ড দিন">
+        </div>
+        
+        <div class="qr-section">
+            <p style="font-size: 12px; font-weight: bold;">পেমেন্ট করতে QR স্ক্যান করুন</p>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=YOUR_PAYMENT_LINK" alt="QR Code">
+        </div>
+
+        <div class="form-group">
+            <label>Transaction ID (TrxID)</label>
+            <input type="text" id="regTxid" placeholder="টাকা পাঠানোর আইডি দিন" style="border: 2px solid #f97316;">
+        </div>
+        <button class="btn btn-reg" onclick="handleRegister()">রেজিস্ট্রেশন সাবমিট করুন</button>
+        <div class="footer-link">
+            <a href="javascript:void(0)" onclick="toggleForm()">লগইনে ফিরে যান</a>
+        </div>
+    </div>
+
+    <div id="msgBox" class="hidden"></div>
+</div>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzE8YwMHm-3HiCWZT2g55nH24C62rGjJu-bCJiXkZi8yQKU99sRUJDEKdTK_-4_PKwXbA/exec";
+
+    function toggleForm() {
+        document.getElementById('loginSection').classList.toggle('hidden');
+        document.getElementById('registerSection').classList.toggle('hidden');
+        document.getElementById('msgBox').classList.add('hidden');
+    }
+
+    function showMsg(text, type) {
+        const msgBox = document.getElementById('msgBox');
+        msgBox.innerText = text;
+        msgBox.className = type;
+        msgBox.classList.remove('hidden');
+    }
+
+    async function handleRegister() {
+        const data = {
+            action: "register",
+            name: document.getElementById('regName').value,
+            mobile: document.getElementById('regMobile').value,
+            txid: document.getElementById('regTxid').value,
+            password: document.getElementById('regPass').value
+        };
+
+        if(!data.name || !data.mobile || !data.txid || !data.password) {
+            alert("সব ঘর পূরণ করুন!"); return;
         }
 
-        function showMsg(text, color) {
-            const msgBox = document.getElementById('msgBox');
-            msgBox.innerText = text;
-            msgBox.className = `mt-4 p-3 rounded text-center bg-${color}-100 text-${color}-700`;
-            msgBox.classList.remove('hidden');
+        showMsg("তথ্য পাঠানো হচ্ছে...", "info");
+        try {
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
+            showMsg("আপনার আবেদন জমা হয়েছে। অ্যাডমিন অনুমোদন করলে লগইন করতে পারবেন।", "success");
+        } catch(e) {
+            showMsg("আবেদন জমা হয়েছে, অনুগ্রহ করে অপেক্ষা করুন।", "success");
         }
+    }
 
-        async function handleRegister() {
-            const data = {
-                action: "register",
-                name: document.getElementById('regName').value,
-                mobile: document.getElementById('regMobile').value,
-                txid: document.getElementById('regTxid').value,
-                password: document.getElementById('regPass').value
-            };
-            showMsg("প্রসেসিং হচ্ছে...", "blue");
-            try {
-                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
-                showMsg("আবেদন জমা হয়েছে! অ্যাডমিন অ্যাপ্রুভ করলে লগইন করতে পারবেন।", "green");
-            } catch(e) { showMsg("জমা হয়েছে, অপেক্ষা করুন।", "green"); }
-        }
+    function handleLogin() {
+        const mobile = document.getElementById('loginMobile').value;
+        const pass = document.getElementById('loginPassword').value;
 
-        function handleLogin() {
-            const mobile = document.getElementById('loginMobile').value;
-            const pass = document.getElementById('loginPassword').value;
-            showMsg("যাচাই করা হচ্ছে...", "blue");
+        if(!mobile || !pass) { alert("মোবাইল ও পাসওয়ার্ড দিন"); return; }
 
-            fetch(SCRIPT_URL + "?action=login&mobile=" + mobile + "&pass=" + pass)
-            .then(res => res.json())
-            .then(result => {
-                if(result.result === "success") {
-                    if(result.status === "Pending") {
-                        showMsg("আপনার অ্যাকাউন্ট এখনো পেন্ডিং আছে।", "orange");
-                    } else {
-                        localStorage.setItem("userMobile", mobile);
-                        window.location.href = "dashboard.html";
-                    }
+        showMsg("যাচাই করা হচ্ছে...", "info");
+
+        fetch(SCRIPT_URL + "?action=login&mobile=" + mobile + "&pass=" + pass)
+        .then(res => res.json())
+        .then(result => {
+            if(result.result === "success") {
+                if(result.status === "Pending") {
+                    showMsg("আপনার অ্যাকাউন্টটি এখনো অনুমোদন (Approve) করা হয়নি।", "error");
                 } else {
-                    showMsg("ভুল মোবাইল বা পাসওয়ার্ড!", "red");
+                    localStorage.setItem("userMobile", mobile);
+                    window.location.href = "dashboard.html";
                 }
-            });
-        }
-    </script>
+            } else {
+                showMsg("ভুল মোবাইল নম্বর অথবা পাসওয়ার্ড!", "error");
+            }
+        }).catch(err => {
+            showMsg("সার্ভারে সমস্যা হচ্ছে, অনুগ্রহ করে আবার চেষ্টা করুন।", "error");
+        });
+    }
+</script>
+
 </body>
 </html>
