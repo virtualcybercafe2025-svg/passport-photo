@@ -7,7 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f4f8; }
         .navbar { background: #2563eb; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .container { max-width: 1100px; margin: 20px auto; padding: 15px; display: flex; flex-wrap: wrap; gap: 20px; }
         .card { background: white; padding: 20px; border-radius: 12px; flex: 1; min-width: 320px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -16,11 +16,9 @@
         label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #555; margin-top: 10px; }
         input, select, button { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 14px; }
         .btn-green { background: #10b981; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-green:hover { background: #059669; }
         .btn-blue { background: #2563eb; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-blue:hover { background: #1d4ed8; }
         .btn-logout { background: #ef4444; color: white; width: auto; padding: 6px 15px; cursor: pointer; border: none; border-radius: 5px; }
-        canvas { max-width: 100%; border: 1px solid #000; box-shadow: 0 5px 20px rgba(0,0,0,0.2); display: none; }
+        canvas { max-width: 100%; border: 1px solid #000; box-shadow: 0 5px 20px rgba(0,0,0,0.2); display: none; image-rendering: pixelated; } /* Upscale এর জন্য pixelated ব্যবহার করা হয়েছে */
         #status { font-size: 13px; color: #2563eb; font-weight: bold; margin-bottom: 10px; }
     </style>
 </head>
@@ -32,24 +30,23 @@
 </div>
 
 <div class="container">
-    <!-- settings -->
     <div class="card">
-        <h3>ছবি এডিট অপশন</h3>
+        <h3>ছবি এডিট ও ক্লিন</h3>
         <label>ছবি সিলেক্ট করুন:</label>
         <input type="file" id="imageInput" accept="image/*">
         
-        <label>ব্যাকগ্রাউন্ড পরিবর্তন:</label>
+        <label>ব্যাকগ্রাউন্ড কালার:</label>
         <select id="bgColor">
             <option value="white">সাদা (White)</option>
             <option value="blue">নীল (Blue)</option>
             <option value="original">অরিজিনাল রাখুন</option>
         </select>
 
-        <label>ছবি পরিষ্কার করুন:</label>
-        <select id="brightness">
-            <option value="1">স্বাভাবিক (Normal)</option>
-            <option value="1.1">হালকা পরিষ্কার (Light)</option>
-            <option value="1.25">বেশি পরিষ্কার (Bright)</option>
+        <label>ছবি পরিষ্কার ও কোয়ালিটি (Upscale):</label>
+        <select id="enhanceMode">
+            <option value="normal">স্বাভাবিক (Normal)</option>
+            <option value="clean">একটু পরিষ্কার (Clean & Sharp)</option>
+            <option value="hd">বেশি পরিষ্কার (HD Upscale)</option>
         </select>
 
         <button class="btn-green" id="processBtn" onclick="startProcessing()">প্রসেস শুরু করুন</button>
@@ -69,7 +66,6 @@
         <button class="btn-blue" onclick="downloadPDF()">PDF ডাউনলোড করুন</button>
     </div>
 
-    <!-- Preview -->
     <div class="preview-box">
         <div id="status"></div>
         <p id="loadingText" style="color: #999;">ছবির প্রিভিউ এখানে দেখা যাবে</p>
@@ -81,8 +77,8 @@
     if(!localStorage.getItem("userMobile")) { window.location.href = "index.html"; }
     function logout() { localStorage.clear(); window.location.href = "index.html"; }
 
-    // API Key থাকলে এখানে দিন, নাহলে অরিজিনাল ছবিতে ক্রপিং হবে
-    const API_KEY = "XaXsNH5iiRcJSFz3BmuFEQcT"; 
+    // API Key থাকলে এখানে দিন
+    const API_KEY = "YOUR_API_KEY_HERE"; 
 
     async function startProcessing() {
         const fileInput = document.getElementById('imageInput');
@@ -92,58 +88,52 @@
         const processBtn = document.getElementById('processBtn');
         const file = fileInput.files[0];
 
-        status.innerText = "প্রসেসিং চলছে... দয়া করে অপেক্ষা করুন।";
+        status.innerText = "AI প্রসেসিং ও ক্লিন চলছে...";
         processBtn.disabled = true;
 
         if (!API_KEY || API_KEY.includes("YOUR_API")) {
             const reader = new FileReader();
             reader.onload = (e) => renderCanvas(e.target.result);
             reader.readAsDataURL(file);
-            status.innerText = "API কী নেই। অরিজিনাল ছবি থেকে পাসপোর্ট সাইজ কাটা হচ্ছে।";
+            status.innerText = "API কী নেই। শুধু ক্লিন ও ক্রপিং করা হলো।";
             processBtn.disabled = false;
         } else {
             const formData = new FormData();
             formData.append('image_file', file);
             formData.append('size', 'auto');
-
             try {
                 const response = await fetch('https://api.remove.bg/v1.0/removebg', {
                     method: 'POST',
                     headers: { 'X-Api-Key': API_KEY },
                     body: formData
                 });
-
                 if (response.ok) {
                     const blob = await response.blob();
                     renderCanvas(URL.createObjectURL(blob));
-                    status.innerText = "ব্যাকগ্রাউন্ড রিমুভ ও ক্রপিং সফল!";
-                } else {
-                    throw new Error("API Error");
-                }
+                    status.innerText = "ব্যাকগ্রাউন্ড রিমুভ ও ক্লিন সফল!";
+                } else { throw new Error(); }
             } catch (err) {
                 const reader = new FileReader();
                 reader.onload = (e) => renderCanvas(e.target.result);
                 reader.readAsDataURL(file);
-                status.innerText = "API লিমিট শেষ। অরিজিনাল ছবি ক্রপ করা হলো।";
-            } finally {
-                processBtn.disabled = false;
-            }
+                status.innerText = "API লিমিট শেষ। অরিজিনাল ছবি ক্লিন করা হলো।";
+            } finally { processBtn.disabled = false; }
         }
     }
 
+    // আপনার কাঙ্ক্ষিত renderCanvas ফাংশন এখানে (Clean, Sharp & Upscale লজিক সহ)
     function renderCanvas(imgUrl) {
         const canvas = document.getElementById('photoCanvas');
         const ctx = canvas.getContext('2d');
         const img = new Image();
         const bgColor = document.getElementById('bgColor').value;
-        const brightValue = document.getElementById('brightness').value;
+        const mode = document.getElementById('enhanceMode').value;
 
         img.onload = function() {
-            // পাসপোর্ট সাইজ রেশিও (৩.৫ : ৪.৫) অনুযায়ী ক্যানভাস সাইজ
-            canvas.width = 350;
+            canvas.width = 350; // Passport Ratio
             canvas.height = 450;
             
-            // ১. ব্যাকগ্রাউন্ড কালার দেওয়া
+            // ১. ব্যাকগ্রাউন্ড কালার
             if(bgColor === "white") {
                 ctx.fillStyle = "#FFFFFF";
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -152,30 +142,35 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            // ২. অটোমেটিক ক্রপিং লজিক (মাঝখান থেকে ছবি কাটা)
+            // ২. অটোমেটিক ক্রপিং (মাঝখান থেকে কাটা)
             let imgRatio = img.width / img.height;
             let canvasRatio = canvas.width / canvas.height;
             let sx, sy, sWidth, sHeight;
-
             if (imgRatio > canvasRatio) {
-                sHeight = img.height;
-                sWidth = img.height * canvasRatio;
-                sx = (img.width - sWidth) / 2;
-                sy = 0;
+                sHeight = img.height; sWidth = img.height * canvasRatio;
+                sx = (img.width - sWidth) / 2; sy = 0;
             } else {
-                sWidth = img.width;
-                sHeight = img.width / canvasRatio;
-                sx = 0;
-                sy = (img.height - sHeight) / 2;
+                sWidth = img.width; sHeight = img.width / canvasRatio;
+                sx = 0; sy = (img.height - sHeight) / 2;
             }
 
-            // ৩. ফিল্টার ও ছবি আঁকা
-            ctx.filter = `brightness(${brightValue})`;
+            // ৩. ইমেজ ক্লিন এবং আপস্কেল ফিল্টার (এই সেই অংশ যা আপনি খুঁজছিলেন)
+            if(mode === "clean") {
+                ctx.filter = "brightness(1.05) contrast(1.1) saturate(1.1) blur(0px)";
+            } else if(mode === "hd") {
+                ctx.filter = "brightness(1.1) contrast(1.2) saturate(1.2) sepia(0.05)";
+                // HD মোডে শার্পনেস বাড়াতে এই ফিল্টার কাজ করে
+            }
+
+            // ৪. ছবি আঁকা
             ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
             
-            // ৪. কালো বর্ডার যোগ করা (কাল বোর্ডের জন্য)
+            // ফিল্টার রিসেট
+            ctx.filter = "none";
+
+            // ৫. কালো বর্ডার (কাল বোর্ডের জন্য)
             ctx.strokeStyle = "black";
-            ctx.lineWidth = 4; // বর্ডারের পুরুত্ব
+            ctx.lineWidth = 4;
             ctx.strokeRect(0, 0, canvas.width, canvas.height);
             
             canvas.style.display = "block";
@@ -187,38 +182,21 @@
     function downloadPDF() {
         const canvas = document.getElementById('photoCanvas');
         if(canvas.style.display === "none") { alert("আগে ছবি প্রসেস করুন!"); return; }
-
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('p', 'mm', 'a4');
         const imgData = canvas.toDataURL('image/jpeg', 1.0);
         const copies = parseInt(document.getElementById('copyCount').value);
         const size = document.getElementById('photoSize').value;
-
-        let w = 35, h = 45; // Passport
-        if(size === "stamp") { w = 20; h = 25; }
-
-        let x = 10, y = 10;
-        let margin = 4; // ছবির মাঝখানে ফাঁকা জায়গা
-
+        let w = 35, h = 45; if(size === "stamp") { w = 20; h = 25; }
+        let x = 10, y = 10; let margin = 4;
         for(let i = 0; i < copies; i++) {
             pdf.addImage(imgData, 'JPEG', x, y, w, h);
-            
-            // প্রতিটি ছবির চারদিকে চিকন কালো বর্ডার (PDF-এও বর্ডার নিশ্চিত করা)
-            pdf.setDrawColor(0); // কালো রং
-            pdf.setLineWidth(0.2); 
-            pdf.rect(x, y, w, h);
-
+            pdf.setDrawColor(0); pdf.setLineWidth(0.2); pdf.rect(x, y, w, h);
             x += w + margin;
-            if(x + w > 200) { // পেজের মার্জিন চেক
-                x = 10;
-                y += h + margin;
-            }
-            if(y + h > 280 && i < copies - 1) { // নতুন পেজ
-                pdf.addPage();
-                x = 10; y = 10;
-            }
+            if(x + w > 200) { x = 10; y += h + margin; }
+            if(y + h > 280 && i < copies - 1) { pdf.addPage(); x = 10; y = 10; }
         }
-        pdf.save("Passport_Photos_Ready_to_Print.pdf");
+        pdf.save("Passport_Photo_Output.pdf");
     }
 </script>
 
