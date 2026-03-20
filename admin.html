@@ -2,75 +2,124 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <title>অ্যাডমিন প্যানেল - ইউজার ম্যানেজমেন্ট</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>অ্যাডমিন প্যানেল - পাসওয়ার্ড সুরক্ষিত</title>
     <style>
-        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
-        .admin-card { background: white; max-width: 900px; margin: auto; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; }
+        .login-box { background: white; max-width: 350px; margin: 100px auto; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+        .admin-container { display: none; background: white; max-width: 900px; margin: auto; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        input[type="password"], input[type="text"] { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
         th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
-        th { background: #2563eb; color: white; }
-        .status-pending { color: orange; font-weight: bold; }
-        .status-approved { color: green; font-weight: bold; }
-        .btn-approve { background: #10b981; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-        .btn-refresh { background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; float: right; }
+        th { background: #1e293b; color: white; }
+        .status-pending { color: #f59e0b; font-weight: bold; }
+        .status-approved { color: #10b981; font-weight: bold; }
+        .btn-approve { background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; }
+        .refresh-btn { background: #6366f1; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; float: right; }
     </style>
 </head>
 <body>
 
-<div class="admin-card">
-    <h2>ইউজার ম্যানেজমেন্ট প্যানেল <button class="btn-refresh" onclick="loadUsers()">রিফ্রেশ করুন</button></h2>
-    <div id="loading">ইউজার লিস্ট লোড হচ্ছে...</div>
-    <table>
-        <thead>
-            <tr>
-                <th>নাম</th>
-                <th>মোবাইল</th>
-                <th>TrxID</th>
-                <th>স্ট্যাটাস</th>
-                <th>অ্যাকশন</th>
-            </tr>
-        </thead>
-        <tbody id="userTable">
-            <!-- ডাটা এখানে আসবে -->
-        </tbody>
-    </table>
+<!-- Password Protection UI -->
+<div id="passwordGate" class="login-box">
+    <h3>অ্যাডমিন লগইন</h3>
+    <input type="password" id="adminPassInput" placeholder="অ্যাডমিন পাসওয়ার্ড দিন">
+    <button class="btn" onclick="checkPassword()">প্রবেশ করুন</button>
+    <p id="err" style="color: red; font-size: 12px; margin-top: 10px;"></p>
+</div>
+
+<!-- Main Admin Panel (Hidden by Default) -->
+<div id="adminPanel" class="admin-container">
+    <div style="overflow: hidden; margin-bottom: 20px;">
+        <h2 style="float: left; color: #1e293b;">ইউজার ম্যানেজমেন্ট</h2>
+        <button class="refresh-btn" onclick="fetchUsers()">রিফ্রেশ করুন</button>
+    </div>
+    <div id="loadingMsg" style="text-align: center; font-weight: bold; color: blue;">লোড হচ্ছে...</div>
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>নাম</th>
+                    <th>মোবাইল</th>
+                    <th>TrxID</th>
+                    <th>স্ট্যাটাস</th>
+                    <th>অ্যাকশন</th>
+                </tr>
+            </thead>
+            <tbody id="userList"></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
+    // আপনার সঠিক Web App URL এখানে বসান
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzE8YwMHm-3HiCWZT2g55nH24C62rGjJu-bCJiXkZi8yQKU99sRUJDEKdTK_-4_PKwXbA/exec";
+    
+    // আপনার পছন্দমতো অ্যাডমিন পাসওয়ার্ড এখানে দিন
+    const MY_SECRET_PASS = "admin123"; 
 
-    async function loadUsers() {
-        document.getElementById('loading').style.display = "block";
-        const response = await fetch(SCRIPT_URL + "?action=getAllUsers");
-        const users = await response.json();
-        
-        const tableBody = document.getElementById('userTable');
-        tableBody.innerHTML = "";
-        
-        users.forEach((user, index) => {
-            if(index === 0) return; // হেডার বাদ দিতে
-            const row = `<tr>
-                <td>${user[1]}</td>
-                <td>${user[3]}</td>
-                <td>${user[5]}</td>
-                <td class="status-${user[7].toLowerCase()}">${user[7]}</td>
-                <td>
-                    ${user[7] === 'Pending' ? `<button class="btn-approve" onclick="approveUser('${user[3]}')">Approve</button>` : 'অ্যাপ্রুভড'}
-                </td>
-            </tr>`;
-            tableBody.innerHTML += row;
-        });
-        document.getElementById('loading').style.display = "none";
+    function checkPassword() {
+        const input = document.getElementById('adminPassInput').value;
+        if(input === MY_SECRET_PASS) {
+            document.getElementById('passwordGate').style.display = "none";
+            document.getElementById('adminPanel').style.display = "block";
+            fetchUsers();
+        } else {
+            document.getElementById('err').innerText = "ভুল পাসওয়ার্ড! আবার চেষ্টা করুন।";
+        }
+    }
+
+    async function fetchUsers() {
+        const userList = document.getElementById('userList');
+        const loading = document.getElementById('loadingMsg');
+        loading.style.display = "block";
+        userList.innerHTML = "";
+
+        try {
+            const response = await fetch(SCRIPT_URL + "?action=getAllUsers");
+            const data = await response.json();
+            
+            // ডাটা লুপিং (প্রথম রো বা হেডার বাদ দিয়ে)
+            for(let i = 1; i < data.length; i++) {
+                const row = document.createElement('tr');
+                const statusClass = data[i][7] === "Pending" ? "status-pending" : "status-approved";
+                
+                row.innerHTML = `
+                    <td>${data[i][1]}</td>
+                    <td>${data[i][3]}</td>
+                    <td>${data[i][5]}</td>
+                    <td class="${statusClass}">${data[i][7]}</td>
+                    <td>
+                        ${data[i][7] === "Pending" ? 
+                        `<button class="btn-approve" onclick="approveUser('${data[i][3]}')">Approve</button>` : 
+                        '<span style="color: gray;">অ্যাপ্রুভড</span>'}
+                    </td>
+                `;
+                userList.appendChild(row);
+            }
+        } catch (e) {
+            alert("ডাটা লোড করতে সমস্যা হচ্ছে। URL চেক করুন।");
+        } finally {
+            loading.style.display = "none";
+        }
     }
 
     async function approveUser(mobile) {
-        if(!confirm("আপনি কি এই ইউজারকে অ্যাপ্রুভ করতে চান?")) return;
-        await fetch(SCRIPT_URL + "?action=approve&mobile=" + mobile);
-        alert("ইউজার অ্যাপ্রুভ হয়েছে!");
-        loadUsers();
-    }
+        if(!confirm(mobile + " নম্বরটি অ্যাপ্রুভ করবেন?")) return;
+        
+        document.getElementById('loadingMsg').innerText = "অ্যাপ্রুভ করা হচ্ছে...";
+        document.getElementById('loadingMsg').style.display = "block";
 
-    window.onload = loadUsers;
+        try {
+            await fetch(SCRIPT_URL + "?action=approve&mobile=" + mobile);
+            alert("ইউজার সফলভাবে অ্যাপ্রুভ হয়েছে!");
+            fetchUsers();
+        } catch (e) {
+            alert("অ্যাপ্রুভ করতে সমস্যা হয়েছে।");
+        }
+    }
 </script>
+
 </body>
 </html>
